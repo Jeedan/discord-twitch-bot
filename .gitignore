@@ -1,0 +1,9 @@
+#env
+.env
+
+
+#eslint
+.eslintrc.json
+
+#node_modules
+node_modules/
