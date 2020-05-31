@@ -49,7 +49,7 @@ const longPollStreamer = async (streamer) => {
 			streamer.announced = false;
 			console.log(`long polling for...${name}...${displayTimeStamp()}`);
 			console.log(
-				`${name} is currently offline! announced: ${streamer.announced}`
+				`${name} is currently offline! announced: ${streamer.announced}`,
 			);
 			// wait one second then try again
 			// await new Promise((resolve) => setTimeout(resolve, checkForStreamsInterval * 2));
@@ -60,6 +60,7 @@ const longPollStreamer = async (streamer) => {
 	}
 };
 
+// consider renaming this when the bot is ready
 const checkLongPollStreams = async () => {
 	setInterval(() => {
 		console.log('***********************************************************');
@@ -77,6 +78,7 @@ function pollAllStreamers() {
 	});
 }
 
+// will need to be changed maybe use mongo instead
 function addStreamer(name, announced) {
 	const streamer = { name: '', announced: false };
 	streamer.name = name;
