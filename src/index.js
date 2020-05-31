@@ -64,7 +64,6 @@ const longPollStreamer = async (streamer) => {
       streamer.announced = false;
       console.log(`long polling for...${name}...${displayTimeStamp()}`);
       console.log(`${name} is currently offline! announced: ${streamer.announced}`);
-      console.log(``);
       // wait one second then try again
       //await new Promise((resolve) => setTimeout(resolve, checkForStreamsInterval * 2));
       //await longPollStreamer(streamer);
@@ -81,7 +80,7 @@ const checkLongPollStreams = async () => {
     console.log(`${displayTimeStamp()}`);
     // loop through the streams in the array and announce them
     pollAllStreamers();
-  }, checkForStreamsInterval);
+  }, checkForStreamsInterval * 6); // check once a minute
 };
 
 function pollAllStreamers() {
