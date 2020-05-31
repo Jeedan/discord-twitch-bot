@@ -1,0 +1,20 @@
+{
+  "name": "discord-twitch-bot",
+  "version": "1.0.0",
+  "description": "a discord bot that will get info from twitch API and message a channel when a streamer goes live",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "author": "Jeedan",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2"
+  }
+}
