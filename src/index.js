@@ -17,9 +17,13 @@ client.once('ready', () => {
 	console.log('Ready!');
 });
 
+// twitchpollinterval is used to start and stop the setInterval
+// started polling is used to make sure not to start multiple setInterval calls through the bot
+let twitchPollInterval;
+let startedPolling = false;
+
 client.on('message', async message =>{
 	if(!message.content.startsWith(prefix) || message.author.bot)return;
-
 	// cut off the prefix and seperate the args via space
 	// '/ +/' this reges makes sure to remove extra spaces so we don't end up with "here,,,,are,,,my,,,,,args"
 	const args = message.content.slice(prefix.length).split(/ +/);
@@ -52,20 +56,24 @@ client.on('message', async message =>{
 
 		message.channel.send(`You wanted to kick: ${taggedUser.username}`);
 	} else if (command === 'app') {
-		const pollTimer = 30000;
-		let twitchPollInterval;
-
+		const pollTimer = 10000;
 		if(!args.length) {
 			return message.channel.send(`You didn't provide any arguments, ${message.author}!\nTry !app help to see commands`);
 		}else if(args[0] === 'help') {
 			return message.channel.send(`These are the commands: !app start,stop,help. ${message.author}`);
 		}else if(args[0] === 'start') {
-			twitchPollInterval = setInterval(async () => {
-				pollAllStreamersForBot(message);
-			}, pollTimer);
+			if(startedPolling) return message.channel.send(`App already running. ${message.author}`);
+			message.channel.send(`Starting process... ${message.author}`);
+			twitchPollInterval = setInterval(() => pollAllStreamersForBot(message), pollTimer);
+			startedPolling = true;
+			console.log(`test interval: ${twitchPollInterval}`);
 		}else if(args[0] === 'stop') {
-			clearInterval(twitchPollInterval);
-			// return message.channel.send(`Stopped polling for twitch streamer status. ${message.author}`);
+			startedPolling = false;
+			if(twitchPollInterval) {
+				console.log(`stopped: ${twitchPollInterval}`);
+				clearInterval(twitchPollInterval);
+				return message.channel.send(`Stopped polling for twitch streamers. ${message.author}`);
+			}
 			return message.channel.send(`TODO in construction. ${message.author}`);
 		}
 	}
@@ -103,7 +111,6 @@ function basicCommands(message) {
 function twitchTest() {
 	// to test the api
 	twitchApi.getUsers();
-	announceStreamIsLive('jeedanjune');
 	console.log(`${displayTimeStamp()}`);
 	console.log('***********************************************************');
 	// checkForStreams();
@@ -119,21 +126,6 @@ function displayTimeStamp() {
 
 	return `${date} ${time}`;
 }
-
-// maybe refactor into another file
-const announceStreamIsLive = async (streamer_name) => {
-	try {
-		const stream = await twitchApi.getStreams(streamer_name);
-		if (stream) {
-			console.log(`${streamer_name} is live!`);
-		} else {
-			console.log(`${streamer_name} is currently offline!`);
-		}
-	} catch (err) {
-		// console.log(`${streamer_name} is currently offline!`);
-		console.error(err);
-	}
-};
 
 // try long polling for getting streamer information
 const longPollStreamer = async (streamer, message) => {
@@ -198,6 +190,7 @@ function pollAllStreamersForBot(message) {
 	streamerArray.forEach((stream) => {
 		longPollStreamer(stream, message);
 	});
+	console.log('***********************************************************');
 }
 
 // will need to be changed maybe use mongo instead
