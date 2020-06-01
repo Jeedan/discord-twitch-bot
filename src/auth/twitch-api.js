@@ -38,6 +38,9 @@ const getRefreshToken = async () => {
 // small test
 // refactor to get user by id/token instead of hard coding
 const getUsers = async (login_name = 'jeedanjune') => {
+	// const userParamPath = userParams(login_name);
+	// console.log(userParamPath);
+	// old /users?login=${login_name}
 	await axios
 		.get(`${api_url}/users?login=${login_name}`, {
 			headers: {
@@ -46,13 +49,12 @@ const getUsers = async (login_name = 'jeedanjune') => {
 			},
 		})
 		.then((resp) => {
-			// console.log(resp.data.data[0]);
 			if (resp.data.data[0]) {
 				if (login_name === 'jeedanjune') {
 					console.log(
 						`${resp.data.data[0].display_name}'s rate limit ${resp.headers['ratelimit-remaining']}/${resp.headers['ratelimit-limit']}`,
 					);
-				}else {
+				} else {
 					console.log(`${resp.data.data[0].display_name} found!`);
 				}
 			} else {
@@ -61,6 +63,17 @@ const getUsers = async (login_name = 'jeedanjune') => {
 		})
 		.catch((err) => console.error(err));
 };
+
+// refactor getUsers to accept multiple users and return an array of data
+function userParams(login_names) {
+	if(login_names.length < 2) return;
+	let loginUrl = '/users?';
+	login_names.forEach(login =>{
+		loginUrl += `login=${login}&`;
+	});
+
+	return loginUrl;
+}
 
 const getStreams = async (streamer_name) => {
 	const {

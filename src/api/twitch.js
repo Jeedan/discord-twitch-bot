@@ -6,6 +6,12 @@ const streamers = require('../streamers.js');
 let twitchPollInterval;
 const pollTimer = 10000;
 
+function stopTwitchPollingInterval() {
+	if (!twitchPollInterval) return;
+	console.log(`stopped: ${twitchPollInterval}`);
+	clearInterval(twitchPollInterval);
+}
+
 function startTwitchPollingInterval(message) {
 	pollAllStreamersForBot(message);
 
@@ -113,6 +119,7 @@ function displayTimeStamp() {
 
 module.exports = {
 	startTwitchPollingInterval,
+	stopTwitchPollingInterval,
 	pollAllStreamersForBot,
 	displayTimeStamp,
 };

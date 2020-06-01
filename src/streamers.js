@@ -13,6 +13,17 @@ function addStreamer(name, announced = false) {
 function getStreamerArray() {
 	return streamerArray;
 }
+// TODO REFACTOR
+addStreamer('mathil1', false);
+addStreamer('dansgaming', false);
+addStreamer('itmejp', false);
+addStreamer('beiruthen', false);
+
+// list streamers
+// for (var i = 0; i < streamerArray.length; i++) {
+//   console.log(`${streamerArray[i].name} is live and status is ${streamerArray[i].announced}`);
+// }
+// console.log(`testing ${JSON.stringify(streamerArray)}`);
 
 module.exports = {
 	addStreamer,

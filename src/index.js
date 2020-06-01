@@ -49,16 +49,6 @@ client.on('message', async (message) => {
 client.login(token);
 // ================================================ DISCORD BOT ================================================
 
-// TODO REFACTOR
-streamers.addStreamer('dansgaming', false);
-streamers.addStreamer('mathil1', false);
-streamers.addStreamer('itmejp', false);
-streamers.addStreamer('beiruthen', false);
-
-// for (var i = 0; i < streamerArray.length; i++) {
-//   console.log(`${streamerArray[i].name} is live and status is ${streamerArray[i].announced}`);
-// }
-// console.log(`testing ${JSON.stringify(streamerArray)}`);
 function basicCommands(message, args, command) {
 	if (command === 'ping') {
 		message.channel.send('pong!');
@@ -112,25 +102,22 @@ function twitchCommands(message, args, command) {
 			startedPolling = true;
 		} else if (args[0] === 'stop') {
 			startedPolling = false;
-			if (twitchPollInterval) {
-				console.log(`stopped: ${twitchPollInterval}`);
-				clearInterval(twitchPollInterval);
-				return message.channel.send(
-					`Stopped polling for twitch streamers. ${message.author}`,
-				);
+			twitch.stopTwitchPollingInterval();
+			return message.channel.send(`Stopped polling for twitch streamers. ${message.author}`);
+		} else if (args[0] === 'add') {
+			const channels = args.slice(1);
+			const streamer = twitchApi.getUsers(channels);
+			if(streamer) {
+				streamers.addStreamer(channels);
+				message.channel.send(`Added ${channels} to the list. ${message.author}`);
+			}else {
+				return message.channel.send(`${channels} does not exist. ${message.author}`);
 			}
-			return message.channel.send(`TODO in construction. ${message.author}`);
-		}else if(args[0] === 'add') {
-			const name = args[1];
-			const streamer = twitchApi.getUsers(name);
-			console.log(streamer);
-			streamers.addStreamer(name);
-		} else if(args[0] === 'list') {
+		} else if (args[0] === 'list') {
 			let msg = 'You are watching: ';
 			streamers.getStreamerArray().forEach((streamer) => {
 				// **name** is markup for bolding in discord chat
 				msg += `\n-**${streamer.name}**`;
-
 			});
 			console.log(msg);
 			message.channel.send(msg);
