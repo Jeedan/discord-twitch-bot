@@ -1,10 +1,11 @@
 /* eslint-disable no-unused-vars */
 require('dotenv').config();
 const twitchApi = require('./auth/twitch-api.js');
+const streamers = require('./streamers.js');
+const twitch = require('./api/twitch.js');
+
 // 10 seconds interval between checking for streams
 const checkForStreamsInterval = 10000;
-// store streamers that we watch for now
-const streamerArray = [];
 // ================================================ DISCORD BOT ================================================
 const Discord = require('discord.js');
 // create a new Discord client
@@ -49,10 +50,10 @@ client.login(token);
 // ================================================ DISCORD BOT ================================================
 
 // TODO REFACTOR
-addStreamer('dansgaming', false);
-addStreamer('mathil1', false);
-addStreamer('itmejp', false);
-addStreamer('beiruthen', false);
+streamers.addStreamer('dansgaming', false);
+streamers.addStreamer('mathil1', false);
+streamers.addStreamer('itmejp', false);
+streamers.addStreamer('beiruthen', false);
 
 // for (var i = 0; i < streamerArray.length; i++) {
 //   console.log(`${streamerArray[i].name} is live and status is ${streamerArray[i].announced}`);
@@ -100,14 +101,14 @@ function twitchCommands(message, args, command) {
 			);
 		} else if (args[0] === 'help') {
 			return message.channel.send(
-				`These are the commands: !app start,stop,help. ${message.author}`,
+				`These are the commands: !app \nstart,\nstop,\nadd,\nlist,\nhelp. ${message.author}`,
 			);
 		} else if (args[0] === 'start') {
 			if (startedPolling) {
 				return message.channel.send(`App already running. ${message.author}`);
 			}
 			message.channel.send(`Starting process... ${message.author}`);
-			startTwitchPollingInterval(message);
+			twitch.startTwitchPollingInterval(message);
 			startedPolling = true;
 		} else if (args[0] === 'stop') {
 			startedPolling = false;
@@ -123,10 +124,10 @@ function twitchCommands(message, args, command) {
 			const name = args[1];
 			const streamer = twitchApi.getUsers(name);
 			console.log(streamer);
-			addStreamer(name);
+			streamers.addStreamer(name);
 		} else if(args[0] === 'list') {
 			let msg = 'You are watching: ';
-			streamerArray.forEach((streamer) => {
+			streamers.getStreamerArray().forEach((streamer) => {
 				// **name** is markup for bolding in discord chat
 				msg += `\n-**${streamer.name}**`;
 
@@ -135,116 +136,4 @@ function twitchCommands(message, args, command) {
 			message.channel.send(msg);
 		}
 	}
-}
-
-function displayTimeStamp() {
-	const today = new Date();
-	const date = `${today.getFullYear()}/${
-		today.getMonth() + 1
-	}/${today.getDate()}`;
-	const time = `${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`;
-
-	return `${date} ${time}`;
-}
-
-function startTwitchPollingInterval(message) {
-	pollAllStreamersForBot(message);
-
-	twitchPollInterval = setInterval(
-		() => pollAllStreamersForBot(message),
-		pollTimer,
-	);
-}
-
-function pollAllStreamersForBot(message) {
-	// call getUsers with no parameters to see my own ratelimit usage
-	twitchApi.getUsers();
-
-	streamerArray.forEach((stream) => {
-		longPollStreamer(stream, message);
-	});
-	console.log('***********************************************************');
-}
-
-function pollAllStreamers() {
-	streamerArray.forEach((stream) => {
-		longPollStreamer(stream);
-	});
-}
-
-// try long polling for getting streamer information
-const longPollStreamer = async (streamer, message) => {
-	try {
-		const { name } = streamer;
-		const stream = await twitchApi.getStreams(name);
-
-		if (stream) {
-			if (streamer.announced) return;
-			console.log(`${name} is live! ... ${displayTimeStamp()}`);
-			if (message) {
-				message.channel.send(
-					`${name} is live!\nGo watch over at https://twitch.tv/${name}`,
-				);
-			}
-			streamer.announced = true;
-		} else {
-			streamer.announced = false;
-			console.log(
-				`long polling for...${name}...${displayTimeStamp()}\n${name} is currently offline!`,
-			);
-			// if(message) message.channel.send(`${name} is currently offline!`);
-		}
-	} catch (err) {
-		console.error(err);
-	}
-};
-
-const PollStreamers = async (streamer) => {
-	try {
-		const { name } = streamer;
-		const stream = await twitchApi.getStreams(streamer.name);
-
-		if (stream) {
-			if (streamer.announced) return;
-			console.log(`${name} is live! ... ${displayTimeStamp()}`);
-			streamer.announced = true;
-		} else {
-			streamer.announced = false;
-			console.log(
-				`long polling for...${name}...${displayTimeStamp()}\n${name} is currently offline!`,
-			);
-		}
-	} catch (err) {
-		console.error(err);
-	}
-};
-
-// will need to be changed maybe use mongo instead
-function addStreamer(name, announced = false) {
-	const streamer = { name: '', announced: false };
-	streamer.name = name;
-	streamer.announced = announced;
-
-	streamerArray.push(streamer);
-}
-
-// consider renaming this when the bot is ready
-const checkLongPollStreams = async () => {
-	setInterval(() => {
-		console.log('***********************************************************');
-		twitchApi.getUsers();
-		console.log(`${displayTimeStamp()}`);
-		// loop through the streams in the array and announce them
-		pollAllStreamers();
-		// check every thirty seconds
-	}, checkForStreamsInterval * 3);
-};
-
-function twitchTest() {
-	// to test the api
-	twitchApi.getUsers();
-	console.log(`${displayTimeStamp()}`);
-	console.log('***********************************************************');
-	// checkForStreams();
-	checkLongPollStreams();
 }
