@@ -37,9 +37,9 @@ const getRefreshToken = async () => {
 
 // small test
 // refactor to get user by id/token instead of hard coding
-const getUsers = async () => {
+const getUsers = async (login_name = 'jeedanjune') => {
 	await axios
-		.get(`${api_url}/users?login=jeedanjune`, {
+		.get(`${api_url}/users?login=${login_name}`, {
 			headers: {
 				'Client-ID': config.TWITCH_CLIENT_ID,
 				Authorization: 'Bearer ' + config.ACCESS_TOKEN,
@@ -47,12 +47,17 @@ const getUsers = async () => {
 		})
 		.then((resp) => {
 			// console.log(resp.data.data[0]);
-			console.log(
-				resp.data.data[0].display_name + '\'s rate limit',
-				resp.headers['ratelimit-remaining'],
-				'/',
-				resp.headers['ratelimit-limit'],
-			);
+			if (resp.data.data[0]) {
+				if (login_name === 'jeedanjune') {
+					console.log(
+						`${resp.data.data[0].display_name}'s rate limit ${resp.headers['ratelimit-remaining']}/${resp.headers['ratelimit-limit']}`,
+					);
+				}else {
+					console.log(`${resp.data.data[0].display_name} found!`);
+				}
+			} else {
+				console.log(`${login_name} this user does not exist!`);
+			}
 		})
 		.catch((err) => console.error(err));
 };
@@ -70,7 +75,6 @@ const getStreams = async (streamer_name) => {
 		.catch((err) => {
 			console.error(err);
 		});
-
 	return data[0] || null;
 };
 
