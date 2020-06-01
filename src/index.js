@@ -53,7 +53,7 @@ client.on('message', async message =>{
 		message.channel.send(`You wanted to kick: ${taggedUser.username}`);
 	} else if (command === 'app') {
 		const pollTimer = 30000;
-		// let twitchPollInterval;
+		let twitchPollInterval;
 
 		if(!args.length) {
 			return message.channel.send(`You didn't provide any arguments, ${message.author}!\nTry !app help to see commands`);
@@ -64,7 +64,7 @@ client.on('message', async message =>{
 				pollAllStreamersForBot(message);
 			}, pollTimer);
 		}else if(args[0] === 'stop') {
-			// clearInterval(twitchPollInterval);
+			clearInterval(twitchPollInterval);
 			// return message.channel.send(`Stopped polling for twitch streamer status. ${message.author}`);
 			return message.channel.send(`TODO in construction. ${message.author}`);
 		}
