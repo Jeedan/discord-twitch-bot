@@ -83,7 +83,7 @@ function basicCommands(message, args, command) {
 	}
 }
 
-function twitchCommands(message, args, command) {
+async function twitchCommands(message, args, command) {
 	if (command === 'app') {
 		if (!args.length) {
 			return message.channel.send(
@@ -105,10 +105,16 @@ function twitchCommands(message, args, command) {
 			twitch.stopTwitchPollingInterval();
 			return message.channel.send(`Stopped polling for twitch streamers. ${message.author}`);
 		} else if (args[0] === 'add') {
+			// TODO this doesn't work properly, if a user doesn't exist it still gets added to the list
 			const channels = args.slice(1);
-			const streamer = twitchApi.getUsers(channels);
+			const channelNames = channels.join(' ');
+			console.log(`These are the channels to search for ${channelNames} their length ${channelNames.length}`);
+			const streamer = await twitchApi.getUsers(channelNames);
+			console.log(streamer);
 			if(streamer) {
-				streamers.addStreamer(channels);
+				channels.forEach(channel =>{
+					streamers.addStreamer(channel);
+				});
 				message.channel.send(`Added ${channels} to the list. ${message.author}`);
 			}else {
 				return message.channel.send(`${channels} does not exist. ${message.author}`);

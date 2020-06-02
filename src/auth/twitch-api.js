@@ -37,38 +37,57 @@ const getRefreshToken = async () => {
 
 // small test
 // refactor to get user by id/token instead of hard coding
-const getUsers = async (login_name = 'jeedanjune') => {
-	// const userParamPath = userParams(login_name);
-	// console.log(userParamPath);
+// i'm using an array of strings for usernames incase we look up multiple users
+// default username is just me for rate limit checking
+const getUsers = async (login_names = 'jeedanjune') => {
+	const userParamPath = userParams(login_names);
+	console.log(userParamPath);
 	// old /users?login=${login_name}
+	const { headers, data :{ data } } =
 	await axios
-		.get(`${api_url}/users?login=${login_name}`, {
+		.get(`${api_url}${userParamPath}`, {
 			headers: {
 				'Client-ID': config.TWITCH_CLIENT_ID,
 				Authorization: 'Bearer ' + config.ACCESS_TOKEN,
 			},
-		})
-		.then((resp) => {
-			if (resp.data.data[0]) {
-				if (login_name === 'jeedanjune') {
-					console.log(
-						`${resp.data.data[0].display_name}'s rate limit ${resp.headers['ratelimit-remaining']}/${resp.headers['ratelimit-limit']}`,
-					);
-				} else {
-					console.log(`${resp.data.data[0].display_name} found!`);
-				}
-			} else {
-				console.log(`${login_name} this user does not exist!`);
-			}
-		})
-		.catch((err) => console.error(err));
+		}).catch((err) => console.error(err));
+
+	if(login_names[0] === 'jeedanjune') {
+		console.log(`${data[0].display_name}'s rate limit ${headers['ratelimit-remaining']}/${headers['ratelimit-limit']}`);
+	}
+
+	return data[0] || null;
 };
+
+// TODO KEEP WORKING ON THIS
+// getUsers(['shortyyguy', 'lirik', 'jeedanjune']);
+
+function displayRateLimit(resp, login_name) {
+
+	console.log(resp);
+
+	if (resp.data.data[0]) {
+		if (login_name === 'jeedanjune') {
+			console.log(
+				`${resp.data.data[0].display_name}'s rate limit ${resp.headers['ratelimit-remaining']}/${resp.headers['ratelimit-limit']}`,
+			);
+		} else {
+			console.log(`${resp.data.data[0].display_name} found!`);
+		}
+	} else {
+		console.log(`${login_name} this user does not exist!`);
+	}
+}
 
 // refactor getUsers to accept multiple users and return an array of data
 function userParams(login_names) {
-	if(login_names.length < 2) return;
+	const names = login_names.split(' ');
+	console.log(` this is from userParams ${names} this is the length: ${names.length}`);
+	// console.log(` this is from names array  ${names} this is the length: ${names.length}`);
 	let loginUrl = '/users?';
-	login_names.forEach(login =>{
+	if(names.length < 2) return `${loginUrl}login=${login_names}` ;
+
+	names.forEach(login =>{
 		loginUrl += `login=${login}&`;
 	});
 
@@ -88,6 +107,8 @@ const getStreams = async (streamer_name) => {
 		.catch((err) => {
 			console.error(err);
 		});
+
+	// console.log(data[0]);
 	return data[0] || null;
 };
 
@@ -95,4 +116,5 @@ module.exports = {
 	getUsers,
 	getStreams,
 	getAccessToken,
+	userParams,
 };
