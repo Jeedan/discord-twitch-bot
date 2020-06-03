@@ -83,6 +83,7 @@ function basicCommands(message, args, command) {
 	}
 }
 
+// refactor to declutter the command functions
 async function twitchCommands(message, args, command) {
 	if (command === 'app') {
 		if (!args.length) {
@@ -108,14 +109,24 @@ async function twitchCommands(message, args, command) {
 			// TODO this doesn't work properly, if a user doesn't exist it still gets added to the list
 			const channels = args.slice(1);
 			const channelNames = channels.join(' ');
-			console.log(`These are the channels to search for ${channelNames} their length ${channelNames.length}`);
 			const streamer = await twitchApi.getUsers(channelNames);
-			console.log(streamer);
-			if(streamer) {
-				channels.forEach(channel =>{
-					streamers.addStreamer(channel);
+			const channelList = [];
+			// console.log(`These are the channels to search for ${channelNames} their length ${channelNames.length}`);
+			// console.log(streamer);
+			if(streamer.length > 0) {
+				streamer.forEach(stream =>{
+					console.log(stream);
+
+					if(!stream) {
+						return message.channel.send(`${stream.login} skipped because it does not exist. ${message.author}`);
+
+					}else {
+						console.log(stream.login);
+						streamers.addStreamer(stream.login);
+						channelList.push(stream.login);
+					}
 				});
-				message.channel.send(`Added ${channels} to the list. ${message.author}`);
+				return message.channel.send(`Added ${channelList.join(' ')} to the list. ${message.author}`);
 			}else {
 				return message.channel.send(`${channels} does not exist. ${message.author}`);
 			}

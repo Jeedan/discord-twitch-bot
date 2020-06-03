@@ -21,19 +21,14 @@ function startTwitchPollingInterval(message) {
 	);
 }
 
-function pollAllStreamersForBot(message) {
+async function pollAllStreamersForBot(message) {
+
+	console.log('***********************************************************');
 	// call getUsers with no parameters to see my own ratelimit usage
-	twitchApi.getUsers();
+	await twitchApi.getUsers();
 
 	streamers.getStreamerArray().forEach((stream) => {
 		longPollStreamer(stream, message);
-	});
-	console.log('***********************************************************');
-}
-
-function pollAllStreamers() {
-	streamers.getStreamerArray().forEach((stream) => {
-		longPollStreamer(stream);
 	});
 }
 
@@ -48,7 +43,7 @@ const longPollStreamer = async (streamer, message) => {
 			console.log(`${name} is live! ... ${displayTimeStamp()}`);
 			if (message) {
 				message.channel.send(
-					`${name} is live!\nGo watch over at https://twitch.tv/${name}`,
+					`**${name} is live!**\nGo watch over at https://twitch.tv/${name}`,
 				);
 			}
 			streamer.announced = true;
@@ -57,55 +52,11 @@ const longPollStreamer = async (streamer, message) => {
 			console.log(
 				`long polling for...${name}...${displayTimeStamp()}\n${name} is currently offline!`,
 			);
-			// if(message) message.channel.send(`${name} is currently offline!`);
 		}
 	} catch (err) {
 		console.error(err);
 	}
 };
-
-// eslint-disable-next-line no-unused-vars
-const PollStreamers = async (streamer) => {
-	try {
-		const { name } = streamer;
-		const stream = await twitchApi.getStreams(streamer.name);
-
-		if (stream) {
-			if (streamer.announced) return;
-			console.log(`${name} is live! ... ${displayTimeStamp()}`);
-			streamer.announced = true;
-		} else {
-			streamer.announced = false;
-			console.log(
-				`long polling for...${name}...${displayTimeStamp()}\n${name} is currently offline!`,
-			);
-		}
-	} catch (err) {
-		console.error(err);
-	}
-};
-
-// consider renaming this when the bot is ready
-const checkLongPollStreams = async () => {
-	setInterval(() => {
-		console.log('***********************************************************');
-		twitchApi.getUsers();
-		console.log(`${displayTimeStamp()}`);
-		// loop through the streams in the array and announce them
-		pollAllStreamers();
-		// check every thirty seconds
-	}, pollTimer * 3);
-};
-
-// eslint-disable-next-line no-unused-vars
-function twitchTest() {
-	// to test the api
-	twitchApi.getUsers();
-	console.log(`${displayTimeStamp()}`);
-	console.log('***********************************************************');
-	// checkForStreams();
-	checkLongPollStreams();
-}
 
 function displayTimeStamp() {
 	const today = new Date();

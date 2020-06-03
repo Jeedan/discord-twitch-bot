@@ -52,15 +52,12 @@ const getUsers = async (login_names = 'jeedanjune') => {
 			},
 		}).catch((err) => console.error(err));
 
-	if(login_names[0] === 'jeedanjune') {
+	if(login_names === 'jeedanjune') {
 		console.log(`${data[0].display_name}'s rate limit ${headers['ratelimit-remaining']}/${headers['ratelimit-limit']}`);
 	}
 
-	return data[0] || null;
+	return data || null;
 };
-
-// TODO KEEP WORKING ON THIS
-// getUsers(['shortyyguy', 'lirik', 'jeedanjune']);
 
 function displayRateLimit(resp, login_name) {
 
@@ -116,5 +113,4 @@ module.exports = {
 	getUsers,
 	getStreams,
 	getAccessToken,
-	userParams,
 };
