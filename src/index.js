@@ -116,7 +116,6 @@ async function twitchCommands(message, args, command) {
 			if(streamer.length > 0) {
 				streamer.forEach(stream =>{
 					console.log(stream);
-
 					if(!stream) {
 						return message.channel.send(`${stream.login} skipped because it does not exist. ${message.author}`);
 
