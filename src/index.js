@@ -10,6 +10,24 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const { PREFIX: prefix, DISCORD_BOT_TOKEN: token } = require('./config.js');
 
+// node's file system module
+const fs = require('fs');
+
+// discord collection, similar to Map but more functionality
+client.commands = new Discord.Collection();
+
+// retrieve all files from the commands folder that end with .js
+const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.js'));
+
+// loop through all command files and store them in the discord collection
+for(const file of commandFiles) {
+	const command = require(`./commands/${file}`);
+
+	// set a new item in the Collection
+	// with the key as the command name and the value as the exported module
+	client.commands.set(command.name, command);
+}
+
 // when the client is ready, run this code
 // this event will only trigger one time after logging in
 client.once('ready', () => {
@@ -19,7 +37,8 @@ client.once('ready', () => {
 // twitchpollinterval is used to start and stop the setInterval
 // started polling is used to make sure not to start multiple setInterval calls through the bot
 
-let startedPolling = false;
+const startedPolling = false;
+const commandCooldowns = new Discord.Collection();
 
 client.on('message', async (message) => {
 	// make sure we start with our prefix, and make sure the message does not come from the bot itself
@@ -29,14 +48,62 @@ client.on('message', async (message) => {
 	const args = message.content.slice(prefix.length).split(/ +/);
 	// will take first element in array and return it while also removingit from the original array
 	// so that you don't have the command name string inside the args array
-	const command = args.shift().toLowerCase();
+	const commandName = args.shift().toLowerCase();
 
-	// TODO create a Commandhandler
-	// TODO refactor into own files
-	basicCommands(message, args, command);
+	// if the discord collection does not containt the command return
+	if(!client.commands.has(commandName)) return;
 
-	// call our twitch commands
-	twitchCommands(message, args, command);
+	const command = client.commands.get(commandName);
+
+	// 	You check if the cooldowns Collection has the command set in it yet. If not, then add it in. Next, 3 variables are created:
+	if(!commandCooldowns.has(command.name)) {
+		commandCooldowns.set(command.name, new Discord.Collection());
+	}
+
+	// A variable with the current timestamp.
+	// A variable that .get()s the Collection for the triggered command.
+	// A variable that gets the necessary cooldown amount. If you don't supply it in your command file,
+	// it'll default to 3. Afterwards, convert it to the proper amount of milliseconds.
+	const now = Date.now();
+	const timestamps = commandCooldowns.get(command.name);
+	const cooldownAmount = (command.cooldown || 3) * 1000;
+
+	if(timestamps.has(message.author.id)) {
+		const expirationTime = timestamps.get(message.author.id) + cooldownAmount;
+
+		if(now < expirationTime) {
+			const timeLeft = (expirationTime - now) / 1000;
+			return message.reply(`please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.name}\` command.`);
+		}
+	}
+
+	// if timestamps doe snot have the message author yet, we set it manually and update it with current time
+	// then we delete the timestamp after the cooldown
+	timestamps.set(message.author.id, now);
+	setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
+	// get the command with the specified name and arguments from the collection and execute it
+	try{
+
+		// if the command has arguments set to true but hasn't set arguments
+		if(command.args && !args.length) {
+			let reply = `You didn't provide any arguments, ${message.author}! `;
+			// display usage if applicable
+			if(command.usage) {
+				reply += `\nThe proper usage would be: \`${prefix}${command.name} ${command.usage}\``;
+			}
+
+			if(command.guildOnly && message.channel.type !== 'text') {
+				return message.reply('I can\'t execute that command inside DMs!');
+			}
+			return message.channel.send(reply);
+
+		}
+
+		client.commands.get(commandName).execute(message, args);
+	} catch(err) {
+		console.error(err);
+		message.reply('There was an error trying to execute that command!');
+	}
 
 	console.log(message.content);
 });
@@ -46,94 +113,3 @@ client.on('message', async (message) => {
 client.login(token);
 // ================================================ DISCORD BOT ================================================
 
-function basicCommands(message, args, command) {
-	if (command === 'ping') {
-		message.channel.send('pong!');
-	} else if (command === 'beep') {
-		message.channel.send('boop!');
-	} else if (command === 'server') {
-		message.channel.send(
-			`Server name: ${message.guild.name}\nTotal members: ${message.guild.memberCount}`,
-		);
-	} else if (command === 'user-info') {
-		message.channel.send(
-			`Your username: ${message.author.username}\nYour ID: ${message.author.id}!`,
-		);
-	} else if (command === 'info') {
-		if (!args.length) {
-			return message.channel.send(
-				`You didn't provide any arguments, ${message.author}!`,
-			);
-		} else if (args[0] === 'foo') {
-			return message.channel.send('bar');
-		}
-
-		message.channel.send(`First argument: ${args[0]}`);
-	} else if (command === 'kick') {
-		if (!message.mentions.users.size) {
-			return message.reply('you need to tag a user in order to kick them!');
-		}
-
-		const taggedUser = message.mentions.users.first();
-
-		message.channel.send(`You wanted to kick: ${taggedUser.username}`);
-	}
-}
-
-// refactor to declutter the command functions
-async function twitchCommands(message, args, command) {
-	if (command === 'app') {
-		if (!args.length) {
-			return message.channel.send(
-				`You didn't provide any arguments, ${message.author}!\nTry !app help to see commands`,
-			);
-		} else if (args[0] === 'help') {
-			return message.channel.send(
-				`These are the commands: !app \nstart,\nstop,\nadd,\nlist,\nhelp. ${message.author}`,
-			);
-		} else if (args[0] === 'start') {
-			if (startedPolling) {
-				return message.channel.send(`App already running. ${message.author}`);
-			}
-			message.channel.send(`Starting process... ${message.author}`);
-			twitchAPI.startTwitchPollingInterval(message);
-			startedPolling = true;
-		} else if (args[0] === 'stop') {
-			startedPolling = false;
-			twitchAPI.stopTwitchPollingInterval();
-			return message.channel.send(`Stopped polling for twitch streamers. ${message.author}`);
-		} else if (args[0] === 'add') {
-			// TODO this doesn't work properly, if a user doesn't exist it still gets added to the list
-			const channels = args.slice(1);
-			const channelNames = channels.join(' ');
-			const streamer = await twitch.getUsers(channelNames);
-			const channelList = [];
-			// console.log(`These are the channels to search for ${channelNames} their length ${channelNames.length}`);
-			// console.log(streamer);
-			if(streamer.length > 0) {
-				streamer.forEach(stream =>{
-					console.log(stream);
-					if(!stream) {
-						return message.channel.send(`${stream.login} skipped because it does not exist. ${message.author}`);
-
-					}else {
-						console.log(stream.login);
-						streamers.addStreamer(stream.login);
-						channelList.push(stream.login);
-					}
-				});
-				return message.channel.send(`Added ${channelList.join(' ')} to the list. ${message.author}`);
-			}else {
-				return message.channel.send(`${channels} does not exist. ${message.author}`);
-			}
-		} else if (args[0] === 'list') {
-			let msg = 'You are watching: ';
-			streamers.getStreamerArray().forEach((streamer) => {
-				// **name** is markup for bolding in discord chat
-				msg += `\n-**${streamer.name}**`;
-			});
-			console.log(msg);
-			message.channel.send(msg);
-		}
-	}
-}

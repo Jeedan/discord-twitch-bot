@@ -7,10 +7,16 @@
 //
 module.exports = {
 	name : 'info',
-	description : 'Multi arguments command!',
+	args : true,
+	guildOnly: true,
+	cooldown: 5,
+	usage: '<text> <text> <text>',
+	description : 'Information about the arguments provided!',
 	execute(message, args) {
-		message.channel.send(
-			`Your username: ${message.author.username}\nYour ID: ${message.author.id}!`,
-		);
+		if (args[0] === 'foo') {
+			return message.channel.send('bar');
+		}
+
+		message.channel.send(`Arguments: ${args}\nArguments length: ${args.length}`);
 	},
 };

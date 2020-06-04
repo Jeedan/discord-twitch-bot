@@ -8,6 +8,12 @@ let startedPolling = false;
 /* eslint-disable no-unused-vars */
 module.exports = {
 	name : 'app',
+	args : true,
+	// only inside a channel and no dms
+	guildOnly: true,
+	cooldown: 5,
+	// refactor this for each command !app has
+	usage: 'start\n!app list\n!app stop\n!app add lirik shortyyguy dansgaming',
 	description : 'This holds the commands to start, add, list and stop twitch API calls and relay them to the discord bot!',
 	async execute(message, args) {
 
