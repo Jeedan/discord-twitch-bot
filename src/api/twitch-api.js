@@ -1,4 +1,4 @@
-const twitchApi = require('../auth/twitch-api.js');
+const twitch = require('../auth/twitch.js');
 const streamers = require('../streamers.js');
 
 // twitchpollinterval is used to start and stop the setInterval
@@ -24,19 +24,18 @@ function startTwitchPollingInterval(message) {
 async function pollAllStreamersForBot(message) {
 
 	console.log('***********************************************************');
-	// call getUsers with no parameters to see my own ratelimit usage
-	await twitchApi.getUsers();
-
 	streamers.getStreamerArray().forEach((stream) => {
 		longPollStreamer(stream, message);
 	});
+	// call getUsers with no parameters to see my own ratelimit usage
+	await twitch.getUsers();
 }
 
 // try long polling for getting streamer information
 const longPollStreamer = async (streamer, message) => {
 	try {
 		const { name } = streamer;
-		const stream = await twitchApi.getStreams(name);
+		const stream = await twitch.getStreams(name);
 
 		if (stream) {
 			if (streamer.announced) return;

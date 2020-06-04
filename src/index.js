@@ -1,11 +1,9 @@
 /* eslint-disable no-unused-vars */
 require('dotenv').config();
-const twitchApi = require('./auth/twitch-api.js');
 const streamers = require('./streamers.js');
-const twitch = require('./api/twitch.js');
+const twitchAPI = require('./api/twitch-api.js');
+const twitch = require('./auth/twitch.js');
 
-// 10 seconds interval between checking for streams
-const checkForStreamsInterval = 10000;
 // ================================================ DISCORD BOT ================================================
 const Discord = require('discord.js');
 // create a new Discord client
@@ -20,8 +18,7 @@ client.once('ready', () => {
 
 // twitchpollinterval is used to start and stop the setInterval
 // started polling is used to make sure not to start multiple setInterval calls through the bot
-let twitchPollInterval;
-const pollTimer = 10000;
+
 let startedPolling = false;
 
 client.on('message', async (message) => {
@@ -99,17 +96,17 @@ async function twitchCommands(message, args, command) {
 				return message.channel.send(`App already running. ${message.author}`);
 			}
 			message.channel.send(`Starting process... ${message.author}`);
-			twitch.startTwitchPollingInterval(message);
+			twitchAPI.startTwitchPollingInterval(message);
 			startedPolling = true;
 		} else if (args[0] === 'stop') {
 			startedPolling = false;
-			twitch.stopTwitchPollingInterval();
+			twitchAPI.stopTwitchPollingInterval();
 			return message.channel.send(`Stopped polling for twitch streamers. ${message.author}`);
 		} else if (args[0] === 'add') {
 			// TODO this doesn't work properly, if a user doesn't exist it still gets added to the list
 			const channels = args.slice(1);
 			const channelNames = channels.join(' ');
-			const streamer = await twitchApi.getUsers(channelNames);
+			const streamer = await twitch.getUsers(channelNames);
 			const channelList = [];
 			// console.log(`These are the channels to search for ${channelNames} their length ${channelNames.length}`);
 			// console.log(streamer);
